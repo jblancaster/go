@@ -9,8 +9,8 @@ import (
 
 type Message struct {
 	rtt time.Duration
-//	pkt_sent int
-//	pkt_rcvd int
+	pkt_sent int
+	pkt_rcvd int
 }
 
 const (
@@ -48,7 +48,9 @@ func ping_it(host string) (*Message, error) {
 	fmt.Println("AvgRtt      = ", stats.AvgRtt)
 	fmt.Println("StdDevRtt   = ", stats.StdDevRtt)
 	return &Message{
-        rtt: stats.AvgRtt,
+        rtt:      stats.AvgRtt,
+        pkt_sent: stats.PacketsSent,
+        pkt_rcvd: stats.PacketsRecv,
     }, nil
 }
 /*
@@ -61,9 +63,12 @@ func latency(host string) {
 */
 // ping
 func main() {
-	m Message{}
-	m, err = ping_it("www.google.com")
+	m, err := ping_it("www.google.com")
 	fmt.Println(err)
 	fmt.Println(os.Stdout)
 	fmt.Println("latency = ", latency_x_1)
+	fmt.Println("m = ", m)
+	fmt.Println("rtt = ", m.rtt)
+	fmt.Println("pkt_sent = ", m.pkt_sent)
+	fmt.Println("pkt_rcvd = ", m.pkt_rcvd)
 }
