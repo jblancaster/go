@@ -14,12 +14,16 @@ type Message struct {
 }
 
 const (
-	N = 60.0
+	N  = 60.0
+	N1 = 40.0
+	N2 = 20.0
 )
 
 var	(
 	err error
 	alpha float64 = 0
+	alpha1 float64 = 0
+	alpha2 float64 = 0
 	s_x float64 = 0
 	t_x float64 = 0
 	jitter_x   float64 = 0
@@ -36,14 +40,21 @@ var	(
 	avg_variance_jitter_x_1  float64 = 0
 	packet_counter int = 0
 	recv_counter int = 0
-	new_packet_loss int = 0
-	s1 int = 0
-	s2 int = 0
+	new_packet_loss float64 = 0
+	s1 float64 = 0
+	s2 float64 = 0
 	pl_avg1 float64 = 0
 	pl_avg2 float64 = 0
 	effective_latency float64 = 0
-	pl_percent int = 0
+	pl_percent float64 = 0
 	r_value float64 = 0
+	latency []float64
+	avg_latency []float64
+	avg_variance_latency []float64
+	jitter []float64
+	avg_jitter []float64
+	avg_variance_jitter []float64
+	output string
 )
 
 func abs_time_diff(t1, t2 float64) float64 {
@@ -73,7 +84,9 @@ func ping_it(host string) (*Message, error) {
 
 // ping
 func main() {
-
+	// Input Arguments
+	// URL, ping_frequency, report_frequency, N, N1, N2, 
+	//
 	m, err := ping_it("www.google.com")
 	if err != nil {
 		return
@@ -81,10 +94,12 @@ func main() {
 
 	// Initialize variables
 	alpha = (2.0 / (N+1.0))
+	alpha1 = (2.0 / (N1+1.0))
+	alpha2 = (2.0 / (N2+1.0))
 	latency_x_1 = float64(float64(int64(m.rtt))/float64(time.Second))
 	avg_latency_x_1 = latency_x_1
 
-	for i:=0; i<10; i++ {
+	for i:=0; i<3; i++ {
 		// LOOP - Get new data point
 		m, err = ping_it("www.google.com")
 		fmt.Println("rtt = ", m.rtt)
@@ -112,6 +127,12 @@ func main() {
 		// Write buffer here
 		// latency, avg_latency, avg_variance_latency
 		// jitter, avg_jitter, avg_variance_jitter
+		latency = append(latency, latency_x)
+		avg_latency = append(avg_latency, avg_latency_x)
+		avg_variance_latency = append(avg_variance_latency, avg_variance_latency_x)
+		jitter = append(jitter, jitter)
+		avg_jitter = append(avg_jitter, avg_jitter)
+		avg_variance_jitter = append(avg_variance_jitter, avg_variance_jitter)
 		fmt.Println("alpha = ", alpha)
 		fmt.Println("s_x = ", s_x)
 		fmt.Println("s_x*s_x = ", s_x*s_x)
@@ -139,11 +160,11 @@ func main() {
 		avg_variance_jitter_x_1 = avg_variance_jitter_x
 
 		// Packet Loss - On data buffer send
-		new_packet_loss = (recv_counter*100) / packet_counter
+		new_packet_loss = float64((recv_counter*100) / packet_counter)
 		s1 = new_packet_loss - pl_percent
 		s2 = new_packet_loss - pl_percent
-		pl_avg1 = pl_avg1 + (alpha * float64(s1))
-		pl_avg2 = pl_avg2 + (alpha * float64(s2))
+		pl_avg1 = pl_avg1 + (alpha1 * float64(s1))
+		pl_avg2 = pl_avg2 + (alpha2 * float64(s2))
 
 		pl_avg1 = math.Max(pl_avg1, 0)
 		pl_avg1 = math.Min(pl_avg1, 100)
@@ -179,4 +200,12 @@ func main() {
 		// REPEAT LOOP
 		time.Sleep(3 * time.Second)
 	}
+
+	// Output json files
+	output = fmt.Sprintf("{\n")
+	fred := fmt.Sprintf("%v", latency)
+	fmt.Printf("%v\n", latency)
+	output = output + fred + "\" }"
+	fmt.Println(output)
+	fmt.Println("fred = ", fred)
 }
