@@ -48,13 +48,17 @@ var	(
 	effective_latency float64 = 0
 	pl_percent float64 = 0
 	r_value float64 = 0
-	latency []float64
-	avg_latency []float64
-	avg_variance_latency []float64
-	jitter []float64
-	avg_jitter []float64
-	avg_variance_jitter []float64
-	output string
+	latency []time.Duration
+	avg_latency []time.Duration
+	avg_variance_latency []time.Duration
+	jitter []time.Duration
+	avg_jitter []time.Duration
+	avg_variance_jitter []time.Duration
+	packet_counter_out []int
+	recv_counter_out []int
+	pl_avg1_out []string
+	pl_avg2_out []string
+	r_value_out []string
 )
 
 func abs_time_diff(t1, t2 float64) float64 {
@@ -86,7 +90,6 @@ func ping_it(host string) (*Message, error) {
 func main() {
 	// Input Arguments
 	// URL, ping_frequency, report_frequency, N, N1, N2, 
-	//
 	m, err := ping_it("www.google.com")
 	if err != nil {
 		return
@@ -127,12 +130,13 @@ func main() {
 		// Write buffer here
 		// latency, avg_latency, avg_variance_latency
 		// jitter, avg_jitter, avg_variance_jitter
-		latency = append(latency, latency_x)
-		avg_latency = append(avg_latency, avg_latency_x)
-		avg_variance_latency = append(avg_variance_latency, avg_variance_latency_x)
-		jitter = append(jitter, jitter)
-		avg_jitter = append(avg_jitter, avg_jitter)
-		avg_variance_jitter = append(avg_variance_jitter, avg_variance_jitter)
+		latency = append(latency, time.Duration(latency_x * float64(time.Second)))
+		avg_latency = append(avg_latency, time.Duration(avg_latency_x * float64(time.Second)))
+		avg_variance_latency = append(avg_variance_latency, time.Duration(avg_variance_latency_x * float64(time.Second)))
+		jitter = append(jitter, time.Duration(jitter_x * float64(time.Second)))
+		avg_jitter = append(avg_jitter, time.Duration(avg_jitter_x * float64(time.Second)))
+		avg_variance_jitter = append(avg_variance_jitter, time.Duration(avg_variance_jitter_x * float64(time.Second)))
+
 		fmt.Println("alpha = ", alpha)
 		fmt.Println("s_x = ", s_x)
 		fmt.Println("s_x*s_x = ", s_x*s_x)
@@ -182,6 +186,11 @@ func main() {
 
 		// Write buffer here
 		// packet_counter, recv_counter, pl_avg1, pl_avg2, r_value
+		packet_counter_out = append(packet_counter_out, packet_counter)
+		recv_counter_out = append(recv_counter_out, recv_counter)
+		pl_avg1_out = append(pl_avg1_out, fmt.Sprintf("%.4f", pl_avg1))
+		pl_avg2_out = append(pl_avg2_out, fmt.Sprintf("%.4f", pl_avg2))
+		r_value_out = append(r_value_out, fmt.Sprintf("%.4f", r_value))
 		fmt.Println("s1 = ", s1)
 		fmt.Println("s2 = ", s2)
 		fmt.Println("pl_avg1 = ", pl_avg1)
@@ -202,10 +211,22 @@ func main() {
 	}
 
 	// Output json files
-	output = fmt.Sprintf("{\n")
-	fred := fmt.Sprintf("%v", latency)
-	fmt.Printf("%v\n", latency)
-	output = output + fred + "\" }"
+	output :=         fmt.Sprintf("{\n")
+	output = output + fmt.Sprintf("  \"devUUID\" : \"a0eebc999c0b4ef8bb6d6bb9bd380a11\",\n")
+	output = output + fmt.Sprintf("  \"latency_timestamp\" : \"%d\",\n", time.Now().Unix())
+	output = output + fmt.Sprintf("  \"data\" : {\n")
+	output = output + fmt.Sprintf("    \"latency\" : \"%v\",\n", latency)
+	output = output + fmt.Sprintf("    \"avg_latency\" : \"%v\",\n", avg_latency)
+	output = output + fmt.Sprintf("    \"avg_variance_latency\" : \"%v\",\n", avg_variance_latency)
+	output = output + fmt.Sprintf("    \"jitter\" : \"%v\",\n", jitter)
+	output = output + fmt.Sprintf("    \"avg_jitter\" : \"%v\",\n", avg_jitter)
+	output = output + fmt.Sprintf("    \"avg_variance_jitter\" : \"%v\",\n", avg_variance_jitter)
+	output = output + fmt.Sprintf("    \"packet_counter\" : \"%v\",\n", packet_counter_out)
+	output = output + fmt.Sprintf("    \"recv_counter\" : \"%v\",\n", recv_counter_out)
+	output = output + fmt.Sprintf("    \"pl_avg1\" : \"%v\",\n", pl_avg1_out)
+	output = output + fmt.Sprintf("    \"pl_avg2\" : \"%v\",\n", pl_avg2_out)
+	output = output + fmt.Sprintf("    \"r_value\" : \"%v\"\n", r_value_out)
+	output = output + fmt.Sprintf("    }\n")
+	output = output + fmt.Sprintf("}")
 	fmt.Println(output)
-	fmt.Println("fred = ", fred)
 }
