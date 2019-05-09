@@ -3,23 +3,29 @@ package main
 import (
 	"fmt"
 	"math"
+	"net/url"
+	"os"
 	"time"
 	ping "github.com/sparrc/go-ping"
 )
 
-type Message struct {
-	rtt time.Duration
-	pkt_sent int
-	pkt_rcvd int
-}
-
 const (
-	N  = 60.0
-	N1 = 40.0
-	N2 = 20.0
+	default_url string = "www.google.com"
+	N float64 = 100.0
+	N1 float64 = 100.0
+	N2 float64 = 100.0
 )
 
 var	(
+
+	// Input Args
+	ping_url string = default_url
+	ping_freq int = 4 // Ping per minute
+	ping_report_freq int = 1 // Report each x*minute(s)
+	ping_N int = 100
+	ping_N1 int = 100
+	ping_N2 int = 100
+
 	err error
 	alpha float64 = 0
 	alpha1 float64 = 0
@@ -61,6 +67,12 @@ var	(
 	r_value_out []string
 )
 
+type Message struct {
+	rtt time.Duration
+	pkt_sent int
+	pkt_rcvd int
+}
+
 func abs_time_diff(t1, t2 float64) float64 {
 	v := t1 - t2
 	if ( v < 0 ) {
@@ -86,9 +98,38 @@ func ping_it(host string) (*Message, error) {
     }, nil
 }
 
+func print_usage() {
+	Println("latency <URL> <Freq/min> <Report*min> <N> <N1> <N2>")
+}
+
+func handle_args( args ...string) (url string, freq int, report int, n int, n1 int, n2 int) {
+	url = ping_url
+	freq = ping_freq
+	report = ping_report_freq
+	n = ping_N
+	n1 = ping_N1
+	n2 = ping_N2
+
+	return url, freq, freq, report, n, n1, n2
+}
+
 // ping
 func main() {
 	// Input Arguments
+	// latency <URL> <Freq/min> <Report*min> <N> <N1> <N2>
+
+	if len(os.Args) > 1 {
+		ping_url, ping_freq, ping_report_freq, ping_N, ping_N1, ping_N2 = 
+		handle_args(os.Args)
+	}
+
+	argsWithProg := os.Args
+	argsWithoutProg := os.Args[1:]
+	fmt.Println("Num args = ", len(os.Args))
+	fmt.Println(argsWithProg)
+	fmt.Println(argsWithoutProg)
+	return
+
 	// URL, ping_frequency, report_frequency, N, N1, N2, 
 	m, err := ping_it("www.google.com")
 	if err != nil {
