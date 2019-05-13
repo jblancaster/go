@@ -1,6 +1,7 @@
 package main
 
 import (
+	"argparse"
 	"fmt"
 	"math"
 	"net/url"
@@ -17,7 +18,6 @@ const (
 )
 
 var	(
-
 	// Input Args
 	ping_url string = default_url
 	ping_freq int = 4 // Ping per minute
@@ -26,6 +26,7 @@ var	(
 	ping_N1 int = 100
 	ping_N2 int = 100
 
+	// Algo Parameters
 	err error
 	alpha float64 = 0
 	alpha1 float64 = 0
@@ -46,6 +47,8 @@ var	(
 	avg_variance_jitter_x_1  float64 = 0
 	packet_counter int = 0
 	recv_counter int = 0
+
+	// Output Report
 	new_packet_loss float64 = 0
 	s1 float64 = 0
 	s2 float64 = 0
@@ -99,27 +102,31 @@ func ping_it(host string) (*Message, error) {
 }
 
 func print_usage() {
-	Println("latency <URL> <Freq/min> <Report*min> <N> <N1> <N2>")
+	fmt.Println("latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>")
 }
 
-func handle_args( args ...string) (url string, freq int, report int, n int, n1 int, n2 int) {
-	url = ping_url
-	freq = ping_freq
-	report = ping_report_freq
-	n = ping_N
-	n1 = ping_N1
-	n2 = ping_N2
+func handle_args( urls string, freq, report, n, n1, n2 int) {
+/*	u, err := url.ParseRequestURI(urls)
+	if err == nil {
+		ping_url = urls
+	}
 
-	return url, freq, freq, report, n, n1, n2
+	ping_freq = freq
+	ping_report_freq = report
+	ping_N = n
+	ping_N1 = n1
+	ping_N2 = n2
+*/
+	for 
+	return
 }
 
 // ping
 func main() {
 	// Input Arguments
-	// latency <URL> <Freq/min> <Report*min> <N> <N1> <N2>
+	// latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>
 
 	if len(os.Args) > 1 {
-		ping_url, ping_freq, ping_report_freq, ping_N, ping_N1, ping_N2 = 
 		handle_args(os.Args)
 	}
 
