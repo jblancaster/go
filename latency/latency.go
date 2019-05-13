@@ -1,11 +1,11 @@
 package main
 
 import (
-	"argparse"
+	"flag"
 	"fmt"
 	"math"
-	"net/url"
-	"os"
+//	"net/url"
+//	"os"
 	"time"
 	ping "github.com/sparrc/go-ping"
 )
@@ -19,12 +19,13 @@ const (
 
 var	(
 	// Input Args
+	help string = "latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>"
 	ping_url string = default_url
 	ping_freq int = 4 // Ping per minute
-	ping_report_freq int = 1 // Report each x*minute(s)
-	ping_N int = 100
-	ping_N1 int = 100
-	ping_N2 int = 100
+	ping_report int = 1 // Report each x*minute(s)
+	ping_n int = 100
+	ping_n1 int = 100
+	ping_n2 int = 100
 
 	// Algo Parameters
 	err error
@@ -105,20 +106,15 @@ func print_usage() {
 	fmt.Println("latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>")
 }
 
-func handle_args( urls string, freq, report, n, n1, n2 int) {
-/*	u, err := url.ParseRequestURI(urls)
-	if err == nil {
-		ping_url = urls
-	}
-
-	ping_freq = freq
-	ping_report_freq = report
-	ping_N = n
-	ping_N1 = n1
-	ping_N2 = n2
-*/
-	for 
-	return
+// Init
+func arg_init() {
+	flag.StringVar(&ping_url,  "u", ping_url, "URL host to ping against")
+	flag.IntVar(&ping_freq, "f", 4, "Number of pings per minute")
+	flag.IntVar(&ping_report, "r", 1, "Number of minutes between reports")
+	flag.IntVar(&ping_n, "n", 100, "N value")
+	flag.IntVar(&ping_n1, "n1", 100, "N1 value")
+	flag.IntVar(&ping_n2, "n2", 100, "N2 value")
+	flag.StringVar(&help,  "help", "latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>", "This menu")
 }
 
 // ping
@@ -126,19 +122,18 @@ func main() {
 	// Input Arguments
 	// latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>
 
-	if len(os.Args) > 1 {
-		handle_args(os.Args)
-	}
-
-	argsWithProg := os.Args
-	argsWithoutProg := os.Args[1:]
-	fmt.Println("Num args = ", len(os.Args))
-	fmt.Println(argsWithProg)
-	fmt.Println(argsWithoutProg)
-	return
+	arg_init()
+	flag.Parse()
+	fmt.Println("ping_url has value ", ping_url)
+	fmt.Println("ping_freq has value ", ping_freq)
+	fmt.Println("ping_report has value ", ping_report)
+	fmt.Println("ping_n has value ", ping_n)
+	fmt.Println("ping_n1 has value ", ping_n1)
+	fmt.Println("ping_n2 has value ", ping_n2)
+	fmt.Println("help has value ", help)
 
 	// URL, ping_frequency, report_frequency, N, N1, N2, 
-	m, err := ping_it("www.google.com")
+	m, err := ping_it(ping_url)
 	if err != nil {
 		return
 	}
