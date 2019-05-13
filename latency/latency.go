@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"encoding/json"
 	"math"
-//	"net/url"
+	"net/url"
 //	"os"
 	"time"
 	ping "github.com/sparrc/go-ping"
@@ -12,9 +13,6 @@ import (
 
 const (
 	default_url string = "www.google.com"
-	N float64 = 100.0
-	N1 float64 = 100.0
-	N2 float64 = 100.0
 )
 
 var	(
@@ -69,12 +67,20 @@ var	(
 	pl_avg1_out []string
 	pl_avg2_out []string
 	r_value_out []string
+	N float64 = 100.0
+	N1 float64 = 100.0
+	N2 float64 = 100.0
 )
 
 type Message struct {
 	rtt time.Duration
 	pkt_sent int
 	pkt_rcvd int
+}
+
+// JSON response structure
+type Latency struct {
+	devUUID string
 }
 
 func abs_time_diff(t1, t2 float64) float64 {
@@ -108,13 +114,13 @@ func print_usage() {
 
 // Init
 func arg_init() {
-	flag.StringVar(&ping_url,  "u", ping_url, "URL host to ping against")
-	flag.IntVar(&ping_freq, "f", 4, "Number of pings per minute")
-	flag.IntVar(&ping_report, "r", 1, "Number of minutes between reports")
-	flag.IntVar(&ping_n, "n", 100, "N value")
-	flag.IntVar(&ping_n1, "n1", 100, "N1 value")
-	flag.IntVar(&ping_n2, "n2", 100, "N2 value")
-	flag.StringVar(&help,  "help", "latency <-u URL> <-f Freq/min> <-r Report*min> <-n N> <-n1 N1> <-n2 N2>", "This menu")
+	flag.StringVar(&ping_url, "u",  default_url, "URL host to ping against")
+	flag.IntVar(&ping_freq,   "f",  ping_freq,   "Number of pings per minute")
+	flag.IntVar(&ping_report, "r",  ping_report, "Number of minutes between reports")
+	flag.IntVar(&ping_n,      "n",  ping_n,  "N value")
+	flag.IntVar(&ping_n1,     "n1", ping_n1, "N1 value")
+	flag.IntVar(&ping_n2,     "n2", ping_n2, "N2 value")
+	flag.StringVar(&help,     "h",  help,    "This menu")
 }
 
 // ping
@@ -124,13 +130,18 @@ func main() {
 
 	arg_init()
 	flag.Parse()
-	fmt.Println("ping_url has value ", ping_url)
-	fmt.Println("ping_freq has value ", ping_freq)
-	fmt.Println("ping_report has value ", ping_report)
-	fmt.Println("ping_n has value ", ping_n)
-	fmt.Println("ping_n1 has value ", ping_n1)
-	fmt.Println("ping_n2 has value ", ping_n2)
-	fmt.Println("help has value ", help)
+
+	u, err := url.ParseRequestURI("http://google.com/")
+	if err != nil {
+		fmt.Println(u, " was invalid. Using default URL")
+	}
+
+	fmt.Println("URL Host is:\t\t",    ping_url)
+	fmt.Println("Ping frequecy is\t",  ping_freq,   "per minute")
+	fmt.Println("Report every\t\t",    ping_report, "minute(s)")
+	fmt.Println("ping_n has value\t",  ping_n)
+	fmt.Println("ping_n1 has value\t", ping_n1)
+	fmt.Println("ping_n2 has value\t", ping_n2)
 
 	// URL, ping_frequency, report_frequency, N, N1, N2, 
 	m, err := ping_it(ping_url)
@@ -139,15 +150,21 @@ func main() {
 	}
 
 	// Initialize variables
-	alpha = (2.0 / (N+1.0))
-	alpha1 = (2.0 / (N1+1.0))
-	alpha2 = (2.0 / (N2+1.0))
-	latency_x_1 = float64(float64(int64(m.rtt))/float64(time.Second))
+	N  = float64(ping_n)
+	N1 = float64(ping_n1)
+	N2 = float64(ping_n2)
+	alpha  = (2.0 /(N+1.0))
+	alpha1 = (2.0 /(N1+1.0))
+	alpha2 = (2.0 /(N2+1.0))
 	avg_latency_x_1 = latency_x_1
+	latency_x_1 = float64(float64(int64(m.rtt))/float64(time.Second))
 
+	// Number of pings per minute
+	sleep_time := int(60/ping_freq)
+	fmt.Println("sleep_time = ", sleep_time)
 	for i:=0; i<3; i++ {
 		// LOOP - Get new data point
-		m, err = ping_it("www.google.com")
+		m, err = ping_it(ping_url)
 		fmt.Println("rtt = ", m.rtt)
 		latency_x = float64(float64(int64(m.rtt))/float64(time.Second))
 		packet_counter += m.pkt_sent
@@ -250,12 +267,13 @@ func main() {
 		//recv_counter = 0
 
 		// REPEAT LOOP
-		time.Sleep(3 * time.Second)
+		time.Sleep(time.Duration(sleep_time) * time.Second)
 	}
 
 	// Output json files
 	output :=         fmt.Sprintf("{\n")
-	output = output + fmt.Sprintf("  \"devUUID\" : \"a0eebc999c0b4ef8bb6d6bb9bd380a11\",\n")
+	output = output + fmt.Sprintf("  \"devUUID\" : \"12345678901234567890123456789012\",\n")
+	output = output + fmt.Sprintf("  \"accountUUID\" : \"12345678901234567890123456789012\",\n")
 	output = output + fmt.Sprintf("  \"latency_timestamp\" : \"%d\",\n", time.Now().Unix())
 	output = output + fmt.Sprintf("  \"data\" : {\n")
 	output = output + fmt.Sprintf("    \"latency\" : \"%v\",\n", latency)
@@ -268,8 +286,11 @@ func main() {
 	output = output + fmt.Sprintf("    \"recv_counter\" : \"%v\",\n", recv_counter_out)
 	output = output + fmt.Sprintf("    \"pl_avg1\" : \"%v\",\n", pl_avg1_out)
 	output = output + fmt.Sprintf("    \"pl_avg2\" : \"%v\",\n", pl_avg2_out)
-	output = output + fmt.Sprintf("    \"r_value\" : \"%v\"\n", r_value_out)
+	output = output + fmt.Sprintf("    \"pl_percent\" : \"%v%%\"\n", 100.0 - pl_percent)
+	output = output + fmt.Sprintf("    \"r_value\" : \"%v\",\n", r_value_out)
 	output = output + fmt.Sprintf("    }\n")
 	output = output + fmt.Sprintf("}")
 	fmt.Println(output)
+    bolB, _ := json.Marshal(true)
+    fmt.Println(string(bolB))
 }
