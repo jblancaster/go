@@ -1,14 +1,17 @@
 package main
 
 import (
+//	"bufio"
 	"flag"
 	"fmt"
-	"encoding/json"
+//	"encoding/json"
+	"io/ioutil"
 	"math"
 	"net/url"
 //	"os"
 	"time"
 	ping "github.com/sparrc/go-ping"
+//	curl "github.com/andelf/go-curl"
 )
 
 const (
@@ -149,6 +152,12 @@ func main() {
 		return
 	}
 
+	if float64(time.Second) == 0.0 {
+		fmt.Println("Cannot ping host, check permissions")
+		fmt.Println("sudo sysctl -w net.ipv4.ping_group_range=\"0 2147483647\"")
+		return
+	}
+
 	// Initialize variables
 	N  = float64(ping_n)
 	N1 = float64(ping_n1)
@@ -271,6 +280,8 @@ func main() {
 	}
 
 	// Output json files
+	// FIXME! - Add devUUID and accountUUID to arg list
+	// FIXME! - Add network support to push json to the API
 	output :=         fmt.Sprintf("{\n")
 	output = output + fmt.Sprintf("  \"devUUID\" : \"12345678901234567890123456789012\",\n")
 	output = output + fmt.Sprintf("  \"accountUUID\" : \"12345678901234567890123456789012\",\n")
@@ -286,11 +297,38 @@ func main() {
 	output = output + fmt.Sprintf("    \"recv_counter\" : \"%v\",\n", recv_counter_out)
 	output = output + fmt.Sprintf("    \"pl_avg1\" : \"%v\",\n", pl_avg1_out)
 	output = output + fmt.Sprintf("    \"pl_avg2\" : \"%v\",\n", pl_avg2_out)
-	output = output + fmt.Sprintf("    \"pl_percent\" : \"%v%%\"\n", 100.0 - pl_percent)
-	output = output + fmt.Sprintf("    \"r_value\" : \"%v\",\n", r_value_out)
+	output = output + fmt.Sprintf("    \"pl_percent\" : \"%v%%\",\n", 100.0 - pl_percent)
+	output = output + fmt.Sprintf("    \"r_value\" : \"%v\"\n", r_value_out)
 	output = output + fmt.Sprintf("    }\n")
 	output = output + fmt.Sprintf("}")
 	fmt.Println(output)
-    bolB, _ := json.Marshal(true)
-    fmt.Println(string(bolB))
+
+	//file_name := fmt.Sprintf("latency_test_%d.json", time.Now().Unix())
+	file_name := fmt.Sprintf("/tmp/latency_test.json")
+	fmt.Println("file_name = ", file_name)
+	latency_test := []byte(output)
+	err = ioutil.WriteFile(file_name, latency_test, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+/*
+    easy := curl.EasyInit()
+    defer easy.Cleanup()
+
+    easy.Setopt(curl.OPT_URL, "http://www.baidu.com/")
+
+    // make a callback function
+    fooTest := func (buf []byte, userdata interface{}) bool {
+        println("DEBUG: size=>", len(buf))
+        println("DEBUG: content=>", string(buf))
+        return true
+    }
+
+    easy.Setopt(curl.OPT_WRITEFUNCTION, fooTest)
+
+    if err := easy.Perform(); err != nil {
+        fmt.Printf("ERROR: %v\n", err)
+    }
+*/
 }
